@@ -3,11 +3,10 @@ import { TextFieldProps } from '@mui/material';
 type TInputType = 'password' | 'text';
 type TVariant = 'outlined' | 'standard';
 
-type BaseTextFieldProps = Pick<TextFieldProps, 'onKeyDown' | 'autoFocus'>;
+type BaseTextFieldProps = Pick<TextFieldProps, 'onKeyDown'>;
 
 export interface CTextFieldProps extends BaseTextFieldProps {
   errorMessage?: string;
-  isError?: boolean;
   inputType?: TInputType;
   isDisabled?: boolean;
   width?: string;

@@ -20,7 +20,6 @@ export const CommonTextField = ({
   onKeyDown,
   autoFocus,
   onBlur,
-  isError,
   readOnly = false,
 }: CTextFieldProps) => {
   return (
@@ -41,11 +40,11 @@ export const CommonTextField = ({
         type={inputType}
         variant={variant}
         disabled={isDisabled}
-        error={isError || !!errorMessage}
+        error={!!errorMessage}
         inputProps={{
           maxLength: maxLength,
           sx: {
-            height: 20,
+            height: 30,
           },
         }}
         onChange={(e) => onChange?.(e.target.value)}
@@ -65,13 +64,12 @@ export const CommonTextField = ({
                       sx={{
                         alignItems: 'center',
                         ':hover': { cursor: 'pointer' },
-                        width: 'fit-content',
                       }}
                       onClick={() => {
                         onChange?.('');
                       }}
                     >
-                      <MdClear />
+                      <MdClear size={15} />
                     </Stack>
                   )}
                   {endAdornmentChildren}
@@ -81,14 +79,14 @@ export const CommonTextField = ({
         }}
       />
 
-      {isError && (
+      {errorMessage && (
         <FormHelperText
-          error={isError}
+          error={!!errorMessage}
           sx={{
             marginTop: 1,
           }}
         >
-          <Typography className="text-red-500" variant={'inherit'}>
+          <Typography className="text-red-500 text-2xl" variant={'inherit'}>
             {errorMessage}
           </Typography>
         </FormHelperText>
