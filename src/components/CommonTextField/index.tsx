@@ -18,14 +18,12 @@ export const CommonTextField = ({
   onChange,
   clearable,
   onKeyDown,
-  autoFocus,
   onBlur,
   readOnly = false,
 }: CTextFieldProps) => {
   return (
     <Box width={width}>
       <TextField
-        autoFocus={autoFocus}
         onKeyDown={onKeyDown}
         label={label}
         fullWidth
@@ -49,6 +47,9 @@ export const CommonTextField = ({
         }}
         onChange={(e) => onChange?.(e.target.value)}
         InputProps={{
+          sx: {
+            marginTop: 0,
+          },
           readOnly: readOnly,
           startAdornment: startAdornmentChildren ? (
             <InputAdornment position="start" sx={{ color: 'inherit' }}>

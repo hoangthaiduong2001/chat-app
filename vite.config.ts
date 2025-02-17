@@ -1,5 +1,6 @@
 /// <reference types='vitest' />
 import react from '@vitejs/plugin-react-swc';
+import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
@@ -14,7 +15,11 @@ export default defineConfig({
     host: 'localhost',
   },
   plugins: [react()],
-
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src/'),
+    },
+  },
   // worker: {
   //  plugins: [ nxViteTsPaths() ],
   // },

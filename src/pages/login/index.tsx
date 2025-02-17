@@ -1,30 +1,36 @@
+import { useLoginMutation } from '@/apis/hooks/useLogin';
+import { CommonTextField } from '@/components/CommonTextField';
+import { setDataToSessionStorage } from '@/config/storage';
+import { paths } from '@/routes/path';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@mui/material';
-
 import { Controller, useForm } from 'react-hook-form';
 import { FaUser } from 'react-icons/fa';
-import { useLoginMutation } from '../../apis/hooks/useLogin';
-import { CommonTextField } from '../../components/CommonTextField';
+import { useNavigate } from 'react-router-dom';
 import { LoginSchema, LoginSchemaType } from './schema';
 
-const Login = () => {
+const LoginPage = () => {
   const { control, handleSubmit } = useForm<LoginSchemaType>({
     resolver: zodResolver(LoginSchema),
     defaultValues: {
       username: '',
     },
   });
+  const navigate = useNavigate();
   const { mutate: loginMutation } = useLoginMutation();
   const onSubmit = handleSubmit(
     (value: LoginSchemaType) => {
       loginMutation(value, {
         onSuccess: (data) => {
           console.log(data);
+          setDataToSessionStorage(data);
+          navigate(paths.chat);
         },
       });
     },
     (error) => console.log(error),
   );
+
   return (
     <section className="h-screen">
       <div className="h-full">
@@ -75,4 +81,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default LoginPage;
