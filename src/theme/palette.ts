@@ -203,7 +203,7 @@ const paletteOptions: PaletteOptions = {
     '900': '#6A4F19',
   },
   secondary: {
-    main: '#1898F5',
+    main: '#0485E3',
     dark: '#0485E3',
   },
   primary: {

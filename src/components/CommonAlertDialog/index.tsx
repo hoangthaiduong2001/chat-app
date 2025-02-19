@@ -1,45 +1,52 @@
-import { Button } from '@mui/material';
+import { Button, DialogContent, DialogContentText } from '@mui/material';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogTitle from '@mui/material/DialogTitle';
 import * as React from 'react';
+import { FaSignOutAlt } from 'react-icons/fa';
 import { CAlertDialogProps } from './type';
 
-export default function AlertDialog({ label, onSubmit, title }: CAlertDialogProps) {
-  const [open, setOpen] = React.useState(false);
-
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
-
+export default function AlertDialog({
+  value,
+  label,
+  onSubmit,
+  setValue,
+  title,
+}: CAlertDialogProps) {
   const handleClose = () => {
-    setOpen(false);
+    setValue(false);
+  };
+  const handleClickOpen = () => {
+    setValue(true);
   };
 
   const handleSubmit = () => {
-    setOpen(false);
+    setValue(false);
     onSubmit();
   };
 
   return (
     <React.Fragment>
       <Button
-        color="inherit"
-        sx={{ ':hover': { backgroundColor: 'transparent' } }}
-        variant="text"
+        className="w-full"
+        variant="contained"
+        color="secondary"
+        startIcon={<FaSignOutAlt />}
         onClick={handleClickOpen}
       >
         {label}
       </Button>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
-
+      <Dialog open={value} onClose={handleClose} maxWidth="xs" fullWidth>
+        <DialogTitle id="alert-dialog-title">Confirmation</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{title}</DialogContentText>
+        </DialogContent>
         <DialogActions>
           <Button color="inherit" variant="text" onClick={handleClose}>
-            Cancel
+            No
           </Button>
           <Button color="error" onClick={handleSubmit} autoFocus>
-            Confirm
+            Yes
           </Button>
         </DialogActions>
       </Dialog>

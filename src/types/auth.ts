@@ -7,3 +7,11 @@ export interface LoginResType {
   username: string;
   online: boolean;
 }
+
+export interface LogoutBodyType {
+  userId: string;
+}
+
+export interface LogoutResType {
+  message: string;
+}

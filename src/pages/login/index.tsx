@@ -1,9 +1,13 @@
 import { useLoginMutation } from '@/apis/hooks/useLogin';
 import { CommonTextField } from '@/components/CommonTextField';
+import { socket } from '@/config/socket';
 import { setDataToSessionStorage } from '@/config/storage';
 import { paths } from '@/routes/path';
+import { UserOnline, UserOnlineError } from '@/types/user';
+import { showToast } from '@/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@mui/material';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { FaUser } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -20,16 +24,28 @@ const LoginPage = () => {
   const { mutate: loginMutation } = useLoginMutation();
   const onSubmit = handleSubmit(
     (value: LoginSchemaType) => {
-      loginMutation(value, {
-        onSuccess: (data) => {
-          console.log(data);
-          setDataToSessionStorage(data);
+      socket.emit('user:login', value.username);
+      socket.once('usersOnline', (data: UserOnline) => {
+        if (data.event !== 'error') {
+          setDataToSessionStorage(data.data[data.data.length - 1]);
           navigate(paths.chat);
-        },
+        }
       });
     },
-    (error) => console.log(error),
+    (error) => console.log(error)
   );
+
+  useEffect(() => {
+    socket.connect();
+    socket.on('user:error', (error: UserOnlineError) => {
+      if (error) {
+        showToast(error.message, 'error');
+      }
+    });
+    return () => {
+      socket.off('user:error');
+    };
+  }, []);
 
   return (
     <section className="h-screen">
@@ -52,7 +68,10 @@ const LoginPage = () => {
                   <Controller
                     name="username"
                     control={control}
-                    render={({ field: { value = '', onChange }, fieldState: { error } }) => (
+                    render={({
+                      field: { value = '', onChange },
+                      fieldState: { error },
+                    }) => (
                       <CommonTextField
                         value={value}
                         onChange={onChange}

@@ -1,9 +1,9 @@
-import { TextFieldProps } from '@mui/material';
+import { SxProps, TextFieldProps, Theme } from '@mui/material';
 
 type TInputType = 'password' | 'text';
 type TVariant = 'outlined' | 'standard';
 
-type BaseTextFieldProps = Pick<TextFieldProps, 'onKeyDown'>;
+type BaseTextFieldProps = Pick<TextFieldProps, 'onKeyDown' | 'InputProps'>;
 
 export interface CTextFieldProps extends BaseTextFieldProps {
   errorMessage?: string;
@@ -20,7 +20,6 @@ export interface CTextFieldProps extends BaseTextFieldProps {
   value: string;
   clearable?: boolean;
   onChange?: (value: string) => void;
-  descriptionText?: string;
-  onBlur?: () => void;
   readOnly?: boolean;
+  sx?: SxProps<Theme>;
 }

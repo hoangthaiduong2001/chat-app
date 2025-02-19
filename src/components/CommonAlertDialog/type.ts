@@ -1,6 +1,7 @@
 export interface CAlertDialogProps {
+  value: boolean;
   label: string;
   title: string;
   onSubmit: () => void;
-  onClose?: () => void;
+  setValue: (value: boolean) => void;
 }

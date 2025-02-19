@@ -374,7 +374,10 @@ const componentsTheme: Components = {
       },
     },
     variants: [
-      { props: { maxWidth: 'sm' }, style: { paper: { maxWidth: '100px !important' } } },
+      {
+        props: { maxWidth: 'sm' },
+        style: { paper: { maxWidth: '100px !important' } },
+      },
       { props: { maxWidth: 'md' }, style: { paper: { maxWidth: '800px' } } },
       { props: { maxWidth: 'lg' }, style: { paper: { maxWidth: '720px' } } },
       { props: { maxWidth: 'xl' }, style: { paper: { maxWidth: '1000px' } } },

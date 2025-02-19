@@ -1,4 +1,11 @@
-import { Box, FormHelperText, InputAdornment, Stack, TextField, Typography } from '@mui/material';
+import {
+  Box,
+  FormHelperText,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { MdClear } from 'react-icons/md';
 import { CTextFieldProps } from './type';
 
@@ -18,7 +25,7 @@ export const CommonTextField = ({
   onChange,
   clearable,
   onKeyDown,
-  onBlur,
+  sx,
   readOnly = false,
 }: CTextFieldProps) => {
   return (
@@ -31,9 +38,6 @@ export const CommonTextField = ({
         placeholder={placeholder}
         defaultValue={defaultValue}
         autoSave="false"
-        onBlur={() => {
-          onBlur?.();
-        }}
         autoComplete={inputType === 'password' ? 'off' : 'on'}
         type={inputType}
         variant={variant}
@@ -47,9 +51,7 @@ export const CommonTextField = ({
         }}
         onChange={(e) => onChange?.(e.target.value)}
         InputProps={{
-          sx: {
-            marginTop: 0,
-          },
+          sx: sx,
           readOnly: readOnly,
           startAdornment: startAdornmentChildren ? (
             <InputAdornment position="start" sx={{ color: 'inherit' }}>
