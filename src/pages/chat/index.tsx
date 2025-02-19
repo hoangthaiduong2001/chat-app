@@ -6,7 +6,8 @@ import { socket } from '@/config/socket';
 import { clearDataToSessionStorage, getUser } from '@/config/storage';
 import { paths } from '@/routes/path';
 import { LoginResType, LogoutBodyType } from '@/types/auth';
-import { showToast } from '@/utils';
+import { MessageRequest, MessageResponse } from '@/types/message';
+import { convertTimestamp, showToast } from '@/utils';
 
 import { Avatar, Badge, Button } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
@@ -56,8 +57,12 @@ export default function ChatPage() {
 
   const [selectedUser, setSelectedUser] = useState<LoginResType | null>(null);
   const [open, setOpen] = useState<boolean>(false);
-  const [newMessage, setNewMessage] = useState('');
+  const [messages, setMessages] = useState<
+    { sender: string; receiver: string; text: string; time: number }[]
+  >([]);
+  const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
+  const [notice, setNotice] = useState<boolean>(false);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const user = getUser();
@@ -68,18 +73,25 @@ export default function ChatPage() {
     .filter((user) => {
       return user.username.toLowerCase().includes(search.toLowerCase());
     });
-  // const [listUser, setListUser] = useState<LoginResType[]>(filteredUsers || []);
   const handleLogout = (value: LogoutBodyType) => {
-    logoutMutation(value, {
-      onSuccess: (data) => {
-        clearDataToSessionStorage();
-        navigate(paths.login);
-        showToast(data.message, 'success');
+    socket.emit('user:disconnect');
+    clearDataToSessionStorage();
+    navigate(paths.login);
+    showToast('Logout success', 'success');
+  };
+
+  const sendMessage = () => {
+    if (input.trim() === '') return;
+    const payloadData: MessageRequest = {
+      message: input,
+      receiver: {
+        id: selectedUser?.id || '',
+        username: selectedUser?.username || '',
       },
-      onError: (err) => {
-        showToast(err.error, 'error');
-      },
-    });
+    };
+    socket.emit('message:send', payloadData);
+    setInput('');
+    // setMessages([...messages, { sender: 'You', text: input }]);
   };
 
   const scrollToBottom = () => {
@@ -91,13 +103,28 @@ export default function ChatPage() {
     socket.on('usersOnline', () => {
       userOnline.refetch();
     });
+    socket.on('message:receive', (data: MessageResponse) => {
+      const message = data.data;
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: message.sender.username,
+          receiver: message.receiver.username,
+          text: message.message,
+          time: message.timestamp,
+        },
+      ]);
+    });
+    return () => {
+      socket.off('message:receive');
+    };
   }, []);
 
   useEffect(() => {
     if (selectedUser) {
       scrollToBottom();
     }
-  }, [selectedUser, newMessage]);
+  }, [selectedUser]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -135,6 +162,7 @@ export default function ChatPage() {
                   <div className="flex-1">
                     <h4 className="text-sm font-semibold">{user.username}</h4>
                   </div>
+                  <Badge color="error" variant="dot" />
                 </div>
               ))
             ) : (
@@ -161,10 +189,12 @@ export default function ChatPage() {
             <div className="flex items-center justify-between border-b pb-2">
               <div className="flex items-center space-x-3">
                 <Avatar>{selectedUser.username.charAt(0)}</Avatar>
+
                 <div>
                   <h4 className="text-sm font-semibold">
                     {selectedUser.username}
                   </h4>
+
                   <p className="text-xs text-gray-500">
                     {selectedUser.online ? 'Online' : 'Offline'}
                   </p>
@@ -172,42 +202,54 @@ export default function ChatPage() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto scrollbar-hidden p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-              {messages.map((msg, idx) => (
-                <div
-                  ref={messageEndRef}
-                  key={idx}
-                  className={`flex ${
-                    msg.sender === 'You' ? 'justify-end' : 'justify-start'
-                  }`}
-                >
+              {messages
+                .filter(
+                  (msg) =>
+                    (msg.sender === user?.username &&
+                      msg.receiver === selectedUser?.username) ||
+                    (msg.sender === selectedUser?.username &&
+                      msg.receiver === user?.username)
+                )
+                .map((people, idx) => (
                   <div
-                    className={`max-w-xs p-3 rounded-lg overflow-y-hidden  ${
-                      msg.sender === 'You'
-                        ? 'bg-purple-500 text-white'
-                        : 'bg-gray-200'
+                    ref={messageEndRef}
+                    key={idx}
+                    className={`flex ${
+                      people.sender === user?.username
+                        ? 'justify-end'
+                        : 'justify-start'
                     }`}
                   >
-                    <p>{msg.text}</p>
-                    <span className="text-xs block text-right mt-1 text-gray-500">
-                      {msg.time}
-                    </span>
+                    <div
+                      className={`max-w-xs p-3 rounded-lg overflow-y-hidden  ${
+                        people.sender === user?.username
+                          ? 'bg-purple-500 text-white'
+                          : 'bg-gray-200'
+                      }`}
+                    >
+                      <p>{people.text}</p>
+                      <span className="text-xs block text-right mt-1 text-gray-500">
+                        {convertTimestamp(people.time)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </div>
             {/* Message Input */}
+
             <div className="flex items-center justify-center gap-3 p-2 border-t">
               <CommonTextField
                 sx={{ borderRadius: 10, margin: 0 }}
                 placeholder="Your message"
-                value={newMessage}
-                // onChange={(e) => setNewMessage(e.target.value)}
+                value={input}
+                onChange={setInput}
               />
               <Button
                 className="h-full w-10"
                 variant="text"
                 color="primary"
-                disabled={!newMessage.trim()}
+                disabled={!input.trim()}
+                onClick={sendMessage}
               >
                 <FaPaperPlane />
               </Button>
