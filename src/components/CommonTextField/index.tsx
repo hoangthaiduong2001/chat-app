@@ -47,6 +47,7 @@ export const CommonTextField = ({
           maxLength: maxLength,
           sx: {
             height: 30,
+            marginX: 3,
           },
         }}
         onChange={(e) => onChange?.(e.target.value)}

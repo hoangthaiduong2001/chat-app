@@ -22,3 +22,10 @@ export type MessageRequest = {
   };
   message: string;
 };
+
+export interface IMessage {
+  sender: string;
+  receiver: string;
+  text: string;
+  time: number;
+}

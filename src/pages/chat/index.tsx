@@ -1,85 +1,44 @@
 import { useGetUserOnline } from '@/apis/hooks/useGetOnlineUser';
-import { useLogoutMutation } from '@/apis/hooks/useLogout';
 import AlertDialog from '@/components/CommonAlertDialog';
 import { CommonTextField } from '@/components/CommonTextField';
 import { socket } from '@/config/socket';
 import { clearDataToSessionStorage, getUser } from '@/config/storage';
 import { paths } from '@/routes/path';
-import { LoginResType, LogoutBodyType } from '@/types/auth';
-import { MessageRequest, MessageResponse } from '@/types/message';
+import { LoginResType } from '@/types/auth';
+import { IMessage, MessageRequest, MessageResponse } from '@/types/message';
 import { convertTimestamp, showToast } from '@/utils';
 
 import { Avatar, Badge, Button } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaPaperPlane, FaSearch } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
-const messages = [
-  {
-    sender: 'Edwin Johnson',
-    text: "Hi! I'm interested in the apartment listing I saw online...",
-    time: '8:35',
-  },
-  {
-    sender: 'You',
-    text: "Hi there! Yes, it's available on those dates...",
-    time: '8:51',
-  },
-  {
-    sender: 'Edwin Johnson',
-    text: "We're looking for a place with a nice view...",
-    time: '8:54',
-  },
-  {
-    sender: 'You',
-    text: 'Great! The apartment has a small balcony...',
-    time: '8:57',
-  },
-  {
-    sender: 'Edwin Johnson',
-    text: 'Cool! Is there a coffee machine or kettle?',
-    time: '9:01',
-  },
-  {
-    sender: 'You',
-    text: 'test',
-    time: '8:57',
-  },
-  {
-    sender: 'You',
-    text: 'test222',
-    time: '8:57',
-  },
-];
-
 export default function ChatPage() {
-  const userOnline = useGetUserOnline();
-
   const [selectedUser, setSelectedUser] = useState<LoginResType | null>(null);
   const [open, setOpen] = useState<boolean>(false);
-  const [messages, setMessages] = useState<
-    { sender: string; receiver: string; text: string; time: number }[]
-  >([]);
+  const [messages, setMessages] = useState<IMessage[]>([]);
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
-  const [notice, setNotice] = useState<boolean>(false);
+  const [notice, setNotice] = useState<Record<string, boolean>>({});
   const messageEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const user = getUser();
-  const { mutate: logoutMutation } = useLogoutMutation();
+  const userOnline = useGetUserOnline();
 
-  const filteredUsers = userOnline.data
-    ?.filter((item) => item.username !== user?.username)
-    .filter((user) => {
-      return user.username.toLowerCase().includes(search.toLowerCase());
-    });
-  const handleLogout = (value: LogoutBodyType) => {
+  const filteredUsers = useMemo(() => {
+    return userOnline.data
+      ?.filter((item) => item.username !== user?.username)
+      .filter((user) =>
+        user.username.toLowerCase().includes(search.toLowerCase())
+      );
+  }, [userOnline.data, user?.username, search]);
+
+  const handleLogout = () => {
     socket.emit('user:disconnect');
     clearDataToSessionStorage();
     navigate(paths.login);
     showToast('Logout success', 'success');
   };
-
   const sendMessage = () => {
     if (input.trim() === '') return;
     const payloadData: MessageRequest = {
@@ -91,20 +50,27 @@ export default function ChatPage() {
     };
     socket.emit('message:send', payloadData);
     setInput('');
-    // setMessages([...messages, { sender: 'You', text: input }]);
   };
 
   const scrollToBottom = () => {
     messageEndRef.current?.scrollIntoView({ behavior: 'instant' });
   };
 
+  const handleEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    },
+    [sendMessage]
+  );
+
   useEffect(() => {
-    socket.connect();
-    socket.on('usersOnline', () => {
+    const handleUsersOnline = () => {
       userOnline.refetch();
-    });
-    socket.on('message:receive', (data: MessageResponse) => {
-      const message = data.data;
+    };
+    const handleMessageReceive = ({ data: message }: MessageResponse) => {
       setMessages((prev) => [
         ...prev,
         {
@@ -114,11 +80,30 @@ export default function ChatPage() {
           time: message.timestamp,
         },
       ]);
-    });
+
+      if (selectedUser?.id !== message.sender.id) {
+        setNotice((prev) => ({
+          ...prev,
+          [message.sender.id]: true,
+        }));
+      }
+      if (selectedUser?.id === message.receiver.id) {
+        setNotice((prev) => ({
+          ...prev,
+          [message.sender.id]: false,
+        }));
+      }
+    };
+
+    socket.connect();
+    socket.on('usersOnline', handleUsersOnline);
+    socket.on('message:receive', handleMessageReceive);
+
+    scrollToBottom();
     return () => {
       socket.off('message:receive');
     };
-  }, []);
+  }, [messages]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -144,11 +129,14 @@ export default function ChatPage() {
             {filteredUsers && filteredUsers?.length > 0 ? (
               filteredUsers.map((user) => (
                 <div
-                  key={user.id}
                   className="flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-gray-100"
+                  key={user.id}
                   onClick={() => {
                     setSelectedUser(user);
-                    scrollToBottom();
+                    setNotice((prev) => ({
+                      ...prev,
+                      [user.id]: false,
+                    }));
                   }}
                 >
                   {user.online ? (
@@ -162,7 +150,7 @@ export default function ChatPage() {
                   <div className="flex-1">
                     <h4 className="text-sm font-semibold">{user.username}</h4>
                   </div>
-                  <Badge color="error" variant="dot" />
+                  {notice[user.id] && <Badge color="error" variant="dot" />}
                 </div>
               ))
             ) : (
@@ -174,7 +162,7 @@ export default function ChatPage() {
             <AlertDialog
               label="Logout"
               title="Are you want logout"
-              onSubmit={() => handleLogout({ userId: user?.id || '' })}
+              onSubmit={handleLogout}
               setValue={setOpen}
               value={open}
             />
@@ -182,7 +170,6 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Chat Window */}
       <div className="flex-1 bg-[#F1F7FC] p-4 m-1 pb-0 flex flex-col rounded-2xl">
         {selectedUser ? (
           <>
@@ -221,28 +208,28 @@ export default function ChatPage() {
                     }`}
                   >
                     <div
-                      className={`max-w-xs p-3 rounded-lg overflow-y-hidden  ${
+                      className={`max-w-xs p-3 rounded-lg overflow-y-hidden ${
                         people.sender === user?.username
                           ? 'bg-purple-500 text-white'
                           : 'bg-gray-200'
                       }`}
                     >
                       <p>{people.text}</p>
-                      <span className="text-xs block text-right mt-1 text-gray-500">
+                      <span className="text-[0.65rem] block text-right mt-1">
                         {convertTimestamp(people.time)}
                       </span>
                     </div>
                   </div>
                 ))}
             </div>
-            {/* Message Input */}
 
-            <div className="flex items-center justify-center gap-3 p-2 border-t">
+            <div className="flex items-center justify-center gap-3 p-4 py-3 border-t">
               <CommonTextField
                 sx={{ borderRadius: 10, margin: 0 }}
                 placeholder="Your message"
                 value={input}
                 onChange={setInput}
+                onKeyDown={handleEnter}
               />
               <Button
                 className="h-full w-10"

@@ -1,4 +1,3 @@
-import { useLoginMutation } from '@/apis/hooks/useLogin';
 import { CommonTextField } from '@/components/CommonTextField';
 import { socket } from '@/config/socket';
 import { setDataToSessionStorage } from '@/config/storage';
@@ -21,7 +20,6 @@ const LoginPage = () => {
     },
   });
   const navigate = useNavigate();
-  const { mutate: loginMutation } = useLoginMutation();
   const onSubmit = handleSubmit(
     (value: LoginSchemaType) => {
       socket.emit('user:login', value.username);
