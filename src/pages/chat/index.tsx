@@ -2,7 +2,16 @@ import { useGetUserOnline } from '@/apis/hooks/useGetOnlineUser';
 import AlertDialog from '@/components/CommonAlertDialog';
 import { CommonTextField } from '@/components/CommonTextField';
 import { socket } from '@/config/socket';
-import { clearDataToSessionStorage, getUser } from '@/config/storage';
+import {
+  clearDataSessionStorage,
+  getIdSocket,
+  getMessages,
+  getUser,
+  getUserSelected,
+  setIdSocketToSessionStorage,
+  setMessagesToSessionStorage,
+  setUserSelectedToSessionStorage,
+} from '@/config/storage';
 import { paths } from '@/routes/path';
 import { LoginResType } from '@/types/auth';
 import { IMessage, MessageRequest, MessageResponse } from '@/types/message';
@@ -14,11 +23,15 @@ import { FaPaperPlane, FaSearch } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 export default function ChatPage() {
-  const [selectedUser, setSelectedUser] = useState<LoginResType | null>(null);
+  const [selectedUser, setSelectedUser] = useState<LoginResType | null>(
+    getUserSelected() ? JSON.parse(getUserSelected() as string) : null
+  );
   const [open, setOpen] = useState<boolean>(false);
-  const [messages, setMessages] = useState<IMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [search, setSearch] = useState('');
+  const [messages, setMessages] = useState<IMessage[]>(
+    getMessages() ? JSON.parse(getMessages() as string) : []
+  );
+  const [input, setInput] = useState<string>('');
+  const [search, setSearch] = useState<string>('');
   const [notice, setNotice] = useState<Record<string, boolean>>({});
   const messageEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -32,10 +45,9 @@ export default function ChatPage() {
         user.username.toLowerCase().includes(search.toLowerCase())
       );
   }, [userOnline.data, user?.username, search]);
-
   const handleLogout = () => {
     socket.emit('user:disconnect');
-    clearDataToSessionStorage();
+    clearDataSessionStorage();
     navigate(paths.login);
     showToast('Logout success', 'success');
   };
@@ -52,8 +64,10 @@ export default function ChatPage() {
     setInput('');
   };
 
-  const scrollToBottom = () => {
-    messageEndRef.current?.scrollIntoView({ behavior: 'instant' });
+  const scrollToBottom = (isSmooth: boolean) => {
+    messageEndRef.current?.scrollIntoView({
+      behavior: isSmooth ? 'smooth' : 'instant',
+    });
   };
 
   const handleEnter = useCallback(
@@ -80,7 +94,6 @@ export default function ChatPage() {
           time: message.timestamp,
         },
       ]);
-
       if (selectedUser?.id !== message.sender.id) {
         setNotice((prev) => ({
           ...prev,
@@ -98,16 +111,27 @@ export default function ChatPage() {
     socket.connect();
     socket.on('usersOnline', handleUsersOnline);
     socket.on('message:receive', handleMessageReceive);
-
-    scrollToBottom();
+    setMessagesToSessionStorage(messages);
+    scrollToBottom(true);
     return () => {
       socket.off('message:receive');
     };
   }, [messages]);
 
   useEffect(() => {
+    socket.on('connect', () => {
+      setIdSocketToSessionStorage(socket.id as string);
+    });
+  }, []);
+
+  useEffect(() => {
+    const oldSocketId = getIdSocket();
+    socket.emit('user:reconnect', oldSocketId);
+  }, [socket.id]);
+
+  useEffect(() => {
     if (selectedUser) {
-      scrollToBottom();
+      scrollToBottom(false);
     }
   }, [selectedUser]);
 
@@ -132,6 +156,7 @@ export default function ChatPage() {
                   className="flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-gray-100"
                   key={user.id}
                   onClick={() => {
+                    setUserSelectedToSessionStorage(user);
                     setSelectedUser(user);
                     setNotice((prev) => ({
                       ...prev,

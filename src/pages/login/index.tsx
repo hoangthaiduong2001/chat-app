@@ -1,6 +1,9 @@
 import { CommonTextField } from '@/components/CommonTextField';
 import { socket } from '@/config/socket';
-import { setDataToSessionStorage } from '@/config/storage';
+import {
+  setDataToSessionStorage,
+  setIdSocketToSessionStorage,
+} from '@/config/storage';
 import { paths } from '@/routes/path';
 import { UserOnline, UserOnlineError } from '@/types/user';
 import { showToast } from '@/utils';
@@ -25,8 +28,10 @@ const LoginPage = () => {
       socket.emit('user:login', value.username);
       socket.once('usersOnline', (data: UserOnline) => {
         if (data.event !== 'error') {
+          setIdSocketToSessionStorage(socket.id as string);
           setDataToSessionStorage(data.data[data.data.length - 1]);
           navigate(paths.chat);
+          showToast('Login success', 'success');
         }
       });
     },
