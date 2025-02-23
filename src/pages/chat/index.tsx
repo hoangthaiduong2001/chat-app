@@ -20,6 +20,8 @@ import { convertTimestamp, showToast } from '@/utils';
 import { Avatar, Badge, Button } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaPaperPlane, FaSearch } from 'react-icons/fa';
+import { IoMdClose } from 'react-icons/io';
+import { IoReorderThree } from 'react-icons/io5';
 import { useNavigate } from 'react-router-dom';
 
 export default function ChatPage() {
@@ -32,6 +34,7 @@ export default function ChatPage() {
   );
   const [input, setInput] = useState<string>('');
   const [search, setSearch] = useState<string>('');
+  const [showSidebar, setShowSidebar] = useState<boolean>(false);
   const [notice, setNotice] = useState<Record<string, boolean>>({});
   const messageEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -45,6 +48,7 @@ export default function ChatPage() {
         user.username.toLowerCase().includes(search.toLowerCase())
       );
   }, [userOnline.data, user?.username, search]);
+
   const handleLogout = () => {
     socket.emit('user:disconnect');
     clearDataSessionStorage();
@@ -79,6 +83,12 @@ export default function ChatPage() {
     },
     [sendMessage]
   );
+
+  useEffect(() => {
+    socket.on('connect', () => {
+      setIdSocketToSessionStorage(socket.id as string);
+    });
+  }, []);
 
   useEffect(() => {
     const handleUsersOnline = () => {
@@ -119,45 +129,44 @@ export default function ChatPage() {
   }, [messages]);
 
   useEffect(() => {
-    socket.on('connect', () => {
-      setIdSocketToSessionStorage(socket.id as string);
-    });
-  }, []);
-
-  useEffect(() => {
     const oldSocketId = getIdSocket();
     socket.emit('user:reconnect', oldSocketId);
   }, [socket.id]);
 
-  useEffect(() => {
-    if (selectedUser) {
-      scrollToBottom(false);
-    }
-  }, [selectedUser]);
-
   return (
-    <div className="flex h-screen bg-gray-100">
-      <div className="w-1/4 bg-white p-4 flex flex-col rounded-2xl m-1">
-        <h2 className="text-xl font-bold mb-4">Messages</h2>
+    <div className="flex h-screen bg-gray-100 relative">
+      <div
+        className={`bg-white p-4 m-0 flex flex-col rounded-2xl transition-all duration-300 
+        ${
+          showSidebar
+            ? 'absolute w-full md:w-full h-full z-50'
+            : 'w-1/4 hidden sm:flex'
+        }`}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold ">Messages</h2>
+          {showSidebar && (
+            <IoMdClose size={24} onClick={() => setShowSidebar(false)} />
+          )}
+        </div>
         <CommonTextField
           placeholder="Search"
-          sx={{ height: 10 }}
           value={search}
           onChange={setSearch}
-          InputProps={{
-            startAdornment: <FaSearch className="text-gray-400 mr-2" />,
-          }}
+          startAdornmentChildren={<FaSearch className="text-gray-400" />}
         />
         <div className="flex flex-col justify-between h-[90%] gap-2">
-          <div className="mt-4 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 max-h-[80vh]">
+          <div className="mt-4 space-y-4 overflow-y-auto max-h-[80vh]">
             {filteredUsers && filteredUsers?.length > 0 ? (
               filteredUsers.map((user) => (
                 <div
-                  className="flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-gray-100"
                   key={user.id}
+                  className="flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-gray-100"
                   onClick={() => {
                     setUserSelectedToSessionStorage(user);
                     setSelectedUser(user);
+                    setShowSidebar(false);
+                    scrollToBottom(false);
                     setNotice((prev) => ({
                       ...prev,
                       [user.id]: false,
@@ -182,8 +191,7 @@ export default function ChatPage() {
               <p className="text-gray-500 text-sm mt-2">No users found</p>
             )}
           </div>
-
-          <div className=" border-t-[1px] pt-3">
+          <div className="border-t pt-3">
             <AlertDialog
               label="Logout"
               title="Are you want logout"
@@ -195,25 +203,29 @@ export default function ChatPage() {
         </div>
       </div>
 
-      <div className="flex-1 bg-[#F1F7FC] p-4 m-1 pb-0 flex flex-col rounded-2xl">
+      <div className="flex-1 bg-[#F1F7FC] p-4 pb-3 flex flex-col rounded-2xl">
         {selectedUser ? (
           <>
             <div className="flex items-center justify-between border-b pb-2">
               <div className="flex items-center space-x-3">
                 <Avatar>{selectedUser.username.charAt(0)}</Avatar>
-
                 <div>
                   <h4 className="text-sm font-semibold">
                     {selectedUser.username}
                   </h4>
-
                   <p className="text-xs text-gray-500">
                     {selectedUser.online ? 'Online' : 'Offline'}
                   </p>
                 </div>
               </div>
+              <div className="sm:hidden">
+                <IoReorderThree
+                  size={24}
+                  onClick={() => setShowSidebar(!showSidebar)}
+                />
+              </div>
             </div>
-            <div className="flex-1 overflow-y-auto scrollbar-hidden p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            <div className="flex-1 overflow-y-auto scrollbar-hidden p-4 space-y-4">
               {messages
                 .filter(
                   (msg) =>
@@ -239,7 +251,7 @@ export default function ChatPage() {
                           : 'bg-gray-200'
                       }`}
                     >
-                      <p>{people.text}</p>
+                      <p className="break-words">{people.text}</p>
                       <span className="text-[0.65rem] block text-right mt-1">
                         {convertTimestamp(people.time)}
                       </span>
@@ -247,8 +259,7 @@ export default function ChatPage() {
                   </div>
                 ))}
             </div>
-
-            <div className="flex items-center justify-center gap-3 p-4 py-3 border-t">
+            <div className="flex items-center justify-center gap-3 pt-3 border-t">
               <CommonTextField
                 sx={{ borderRadius: 10, margin: 0 }}
                 placeholder="Your message"

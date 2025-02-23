@@ -4,56 +4,6 @@ import layoutTheme from './layout';
 import paletteTheme from './palette';
 
 const componentsTheme: Components = {
-  MuiTypography: {
-    defaultProps: {
-      variantMapping: {
-        body1: 'span',
-        body2: 'span',
-        inherit: 'span',
-      },
-    },
-    styleOverrides: {
-      h1: {
-        fontSize: '40px',
-        fontWeight: 'bold',
-      },
-    },
-  },
-  MuiCheckbox: {
-    styleOverrides: {
-      root: {
-        padding: 0,
-        borderRadius: '2px',
-        height: '18px',
-        width: '18px',
-        color: paletteTheme.icon.secondary,
-        '&:hover': {
-          backgroundColor: paletteTheme.layer?.hover03,
-        },
-        '.MuiSvgIcon-root': {
-          height: '18px',
-          width: '18px',
-        },
-        '&.Mui-checked, &.MuiCheckbox-indeterminate': {
-          color: paletteTheme.icon.brandSecondary,
-        },
-        '&.Mui-disabled': {
-          color: paletteTheme.icon.disabled,
-        },
-      },
-    },
-  },
-  MuiTooltip: {
-    styleOverrides: {
-      tooltip: {
-        padding: '4px 8px',
-        borderRadius: '4px',
-        backgroundColor: paletteTheme.neutralDark['800'],
-        color: paletteTheme.neutralLight[0],
-        ...layoutTheme.customShadow?.['002'],
-      },
-    },
-  },
   MuiOutlinedInput: {
     defaultProps: {
       size: 'small',
@@ -100,29 +50,6 @@ const componentsTheme: Components = {
             borderColor: `${paletteTheme.status.error} !important`,
           },
         },
-      },
-    },
-  },
-  MuiMenuItem: {
-    styleOverrides: {
-      root: {
-        ...layoutTheme.typography.base,
-        '&:hover ': {
-          backgroundColor: paletteTheme.layer?.hover01,
-        },
-        '&.Mui-selected': {
-          backgroundColor: `${paletteTheme.layer?.active01} !important`,
-          '&:hover': {
-            backgroundColor: paletteTheme.layer?.hover01,
-          },
-        },
-      },
-    },
-  },
-  MuiInputBase: {
-    styleOverrides: {
-      input: {
-        ...layoutTheme.typography.base,
       },
     },
   },
@@ -348,13 +275,6 @@ const componentsTheme: Components = {
       },
     },
   },
-  MuiToolbar: {
-    styleOverrides: {
-      root: {
-        minHeight: 'unset !important',
-      },
-    },
-  },
   MuiDialog: {
     styleOverrides: {
       paper: {
@@ -397,59 +317,10 @@ const componentsTheme: Components = {
       },
     },
   },
-  MuiRadio: {
-    defaultProps: {
-      size: 'small',
-    },
-    styleOverrides: {
-      root: {
-        height: 28,
-        width: 28,
-        '& span svg': {
-          height: 18,
-          width: 18,
-        },
-        color: paletteTheme.icon.secondary,
-        '&.Mui-checked': {
-          color: paletteTheme.icon.brandSecondary,
-        },
-        '&.Mui-disabled': {
-          color: paletteTheme.icon.disabled,
-        },
-      },
-    },
-  },
   MuiFormControlLabel: {
     styleOverrides: {
       label: {
         ...layoutTheme.typography.base,
-      },
-    },
-  },
-  MuiLink: {
-    styleOverrides: {
-      root: {
-        '&:hover': {
-          cursor: 'pointer',
-        },
-      },
-    },
-  },
-  MuiListItemIcon: {
-    styleOverrides: {
-      root: {
-        minWidth: 'unset',
-        color: 'inherit',
-      },
-    },
-  },
-  MuiListItemButton: {
-    styleOverrides: {
-      root: {
-        padding: '8px',
-        '&:hover': {
-          backgroundColor: 'transparent',
-        },
       },
     },
   },
@@ -458,13 +329,6 @@ const componentsTheme: Components = {
       root: {
         margin: '3px 0 0',
         fontSize: '11px',
-      },
-    },
-  },
-  MuiPaper: {
-    styleOverrides: {
-      root: {
-        ...layoutTheme.customShadow?.['005'],
       },
     },
   },
