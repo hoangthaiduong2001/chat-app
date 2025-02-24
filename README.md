@@ -5,7 +5,7 @@ This is the React implementation of the Chat App.
 Please update file chat.socket.ts in server following (Because this file does not meet the requirements, I have made some changes.):
 
 ## update file chat.socket.ts
-
+```
 import { User } from '@nx-chat-assignment/shared-models';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from '../services/auth.service';
@@ -13,18 +13,19 @@ import { MessagesService } from '../services/messages.service';
 import { UsersService } from '../services/users.service';
 
 const userSockets: Record<string, string> = {};
+
 export const ChatSocket = (io: Server) => {
-io.on('connection', (socket: Socket) => {
-console.log(`✅ User connected: ${socket.id}`);
-socket.on('user:login', (username: string) => {
-const user = AuthService.login(username);
-if (!user) {
-io.emit('user:error', {
-event: 'user:error',
-message: 'Username is already taken',
-});
-return;
-}
+      io.on('connection', (socket: Socket) => {
+            console.log(`✅ User connected: ${socket.id}`);
+            socket.on('user:login', (username: string) => {
+                  const user = AuthService.login(username);
+                        if (!user) {
+                        io.emit('user:error', {
+                              event: 'user:error',
+                              message: 'Username is already taken',
+                        });
+            return;
+      }
 
       socket.data.user = user;
       userSockets[user.id] = socket.id;
@@ -109,3 +110,4 @@ return;
 
 });
 };
+```
