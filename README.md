@@ -14,16 +14,15 @@ const userSockets: Record<string, string> = {};
 export const ChatSocket = (io: Server) => {
 io.on('connection', (socket: Socket) => {
 console.log(`✅ User connected: ${socket.id}`);
-
-    socket.on('user:login', (username: string) => {
-      const user = AuthService.login(username);
-      if (!user) {
-        io.emit('user:error', {
-          event: 'user:error',
-          message: 'Username is already taken',
-        });
-        return;
-      }
+socket.on('user:login', (username: string) => {
+const user = AuthService.login(username);
+if (!user) {
+io.emit('user:error', {
+event: 'user:error',
+message: 'Username is already taken',
+});
+return;
+}
 
       socket.data.user = user;
       userSockets[user.id] = socket.id;
